@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://www.gstatic.com; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src https://egornetwork-5600d.firebaseapp.com; base-uri 'none'; form-action 'none'; object-src 'none'; require-trusted-types-for 'script'; trusted-types 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
+<title>Подтверждение — EgorNetwork</title>
+<meta name="description" content="Обработка ссылок из писем EgorNetwork.">
+<meta name="theme-color" content="#07080b">
+<link rel="icon" href="assets/img/favicon-32.png" type="image/png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/css/site.css">
+<script src="assets/js/site.js"></script>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="assets/css/anthill.css">
+<script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js" integrity="sha384-Uv5NOxmI4D88FRrXAe7tQNnStDeQK/nnWkSogirw0xr1ZlJhTpk64V2KxKejMfys" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js" integrity="sha384-P44Lc4FFaOc/XnFQzAIpmmZZpAstRvYwQLiHHU5LHtlBmblzk5gCbsRCe4hJY6IN" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore-compat.js" integrity="sha384-+mJynELdmYgerSPOJua2KFssOXmteKEsil0rhX2Pb8SkqF7j6lHJszb4/K90oC0u" crossorigin="anonymous"></script>
+<script src="assets/js/firebase-init.js" defer></script>
+<script src="assets/js/auth-action.js" defer></script>
+</head>
+<body class="ah-page">
+<header class="site-header" id="site-header"></header>
+
+<main id="main" class="ah wrap">
+  <section class="ah-screen">
+    <div class="card ah-card stack" id="act-card">
+      <span class="eyebrow" id="act-eyebrow">Аккаунт</span>
+      <h1 id="act-title">Проверяю ссылку…</h1>
+      <p class="lead" id="act-text"></p>
+
+      <div class="btn-row" id="act-verify" hidden>
+        <button class="btn btn--primary" type="button" id="act-verify-btn">Подтвердить почту</button>
+      </div>
+
+      <form class="stack" id="act-reset" novalidate hidden>
+        <div class="field"><label for="act-pass">Новый пароль</label><input class="input" id="act-pass" type="password" autocomplete="new-password" minlength="8"></div>
+        <div class="field"><label for="act-pass2">Ещё раз</label><input class="input" id="act-pass2" type="password" autocomplete="new-password" minlength="8"></div>
+        <button class="btn btn--primary" type="submit" id="act-reset-btn">Сохранить пароль</button>
+      </form>
+
+      <p class="status" id="act-status" role="status"></p>
+      <a class="btn" href="anthill.html" id="act-back" hidden>Открыть Муравейник</a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer" id="site-footer"></footer>
+</body>
+</html>

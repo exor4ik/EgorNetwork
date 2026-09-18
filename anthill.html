@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://www.gstatic.com; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src https://egornetwork-5600d.firebaseapp.com; base-uri 'none'; form-action 'none'; object-src 'none'; require-trusted-types-for 'script'; trusted-types 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
+<title>Муравейник — EgorNetwork</title>
+<meta name="description" content="Муравейник — мессенджер EgorNetwork со сквозным шифрованием.">
+<meta name="theme-color" content="#07080b">
+<link rel="icon" href="assets/img/favicon-32.png" type="image/png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/css/site.css">
+<script src="assets/js/site.js"></script>
+<link rel="stylesheet" href="assets/css/anthill.css">
+<script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js" integrity="sha384-Uv5NOxmI4D88FRrXAe7tQNnStDeQK/nnWkSogirw0xr1ZlJhTpk64V2KxKejMfys" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js" integrity="sha384-P44Lc4FFaOc/XnFQzAIpmmZZpAstRvYwQLiHHU5LHtlBmblzk5gCbsRCe4hJY6IN" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore-compat.js" integrity="sha384-+mJynELdmYgerSPOJua2KFssOXmteKEsil0rhX2Pb8SkqF7j6lHJszb4/K90oC0u" crossorigin="anonymous"></script>
+<script src="assets/js/firebase-init.js" defer></script>
+<script type="module" src="assets/js/anthill/app.js"></script>
+</head>
+<body class="ah-page">
+<header class="site-header" id="site-header"></header>
+
+<main id="main" class="ah wrap">
+
+  <section class="ah-screen" id="scr-loading">
+    <p class="status" role="status">Загрузка Муравейника…</p>
+  </section>
+
+  <!-- Вход / регистрация -->
+  <section class="ah-screen" id="scr-auth" hidden>
+    <div class="card ah-card">
+      <span class="eyebrow">Сквозное шифрование</span>
+      <h1>Муравейник</h1>
+      <p class="lead">Личные сообщения и группы. Текст, фото и названия групп шифруются на устройстве — сервер видит только шифротекст.</p>
+      <div class="ah-tabs" role="tablist">
+        <button type="button" role="tab" id="tab-login" aria-selected="true">Вход</button>
+        <button type="button" role="tab" id="tab-register" aria-selected="false">Регистрация</button>
+      </div>
+      <form class="stack" id="auth-form" novalidate>
+        <div class="field"><label for="auth-email">Почта</label><input class="input" id="auth-email" type="email" autocomplete="username" required></div>
+        <div class="field"><label for="auth-pass">Пароль</label><input class="input" id="auth-pass" type="password" autocomplete="current-password" minlength="8" required></div>
+        <div class="field" id="auth-pass2-wrap" hidden><label for="auth-pass2">Пароль ещё раз</label><input class="input" id="auth-pass2" type="password" autocomplete="new-password" minlength="8"></div>
+        <p class="ah-note" id="auth-note" hidden>Почту видит только сервис входа — другим пользователям она <strong>не показывается</strong>. Для анонимности заведите отдельный ящик, не связанный с вашим именем.</p>
+        <button class="btn btn--primary" type="submit" id="auth-submit">Войти</button>
+        <p class="status" id="auth-status" role="status"></p>
+        <button class="ah-linkbtn" type="button" id="auth-reset">Забыли пароль?</button>
+      </form>
+    </div>
+  </section>
+
+
+  <!-- Профиль -->
+  <section class="ah-screen" id="scr-setup" hidden>
+    <form class="card ah-card stack" id="setup-form" novalidate>
+      <span class="eyebrow">Шаг 1 из 2</span>
+      <h1>Профиль</h1>
+      <p class="lead">Это всё, что увидят другие. Не указывайте реальное имя, город, возраст — это публичная карточка.</p>
+      <div class="field"><label for="setup-handle">Ник (навсегда)</label><input class="input" id="setup-handle" maxlength="20" autocomplete="off" spellcheck="false" placeholder="например, night_ant"><p class="hint">3–20 символов: a–z, 0–9, _. Найти вас можно только по точному нику.</p></div>
+      <div class="field"><label for="setup-bio">О себе</label><textarea class="textarea" id="setup-bio" maxlength="280" rows="3"></textarea></div>
+      <div class="field"><span class="label">Аватар</span>
+        <div class="btn-row" data-center-items><span class="ava ava--lg" id="setup-ava"></span><label class="btn btn--sm" for="setup-avatar">Выбрать картинку</label><input type="file" id="setup-avatar" accept="image/*" hidden></div>
+        <p class="hint">Картинка пересжимается на устройстве в 128×128 — все метаданные (EXIF, GPS) вырезаются.</p>
+      </div>
+      <button class="btn btn--primary" type="submit">Далее</button>
+      <p class="status" id="setup-status" role="status"></p>
+      <button class="ah-linkbtn" type="button" data-logout>Выйти</button>
+    </form>
+  </section>
+
+  <!-- Код восстановления -->
+  <section class="ah-screen" id="scr-code" hidden>
+    <form class="card ah-card stack" id="code-form" novalidate>
+      <span class="eyebrow" id="code-step">Шаг 2 из 2</span>
+      <h1>Код восстановления</h1>
+      <p class="lead">Только с ним вы прочитаете переписку на другом устройстве или после выхода. <strong>Мы его не храним и не восстановим.</strong> Потеряете — старые сообщения прочитать будет нельзя.</p>
+      <div class="ah-code" id="code-value"></div>
+      <div class="btn-row"><button class="btn btn--sm" type="button" data-copy-from="code-value">Копировать</button><button class="btn btn--sm" type="button" id="code-download">Скачать .txt</button></div>
+      <label class="ah-check"><input type="checkbox" id="code-saved"> Я сохранил код в надёжном месте (менеджер паролей, бумага).</label>
+      <div class="field"><label for="code-confirm">Для проверки введите последние 4 символа кода</label><input class="input mono" id="code-confirm" maxlength="4" autocomplete="off" spellcheck="false"></div>
+      <button class="btn btn--primary" type="submit" id="code-submit">Готово</button>
+      <p class="status" id="code-status" role="status"></p>
+    </form>
+  </section>
+
+  <!-- Восстановление ключей -->
+  <section class="ah-screen" id="scr-restore" hidden>
+    <form class="card ah-card stack" id="restore-form" novalidate>
+      <span class="eyebrow">Новое устройство</span>
+      <h1>Введите код восстановления</h1>
+      <p class="lead">Ключи шифрования хранятся только на ваших устройствах. Чтобы расшифровать переписку здесь, введите код, который вы сохранили при регистрации.</p>
+      <div class="field"><label for="restore-code">Код</label><input class="input mono" id="restore-code" autocomplete="off" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"></div>
+      <button class="btn btn--primary" type="submit">Восстановить</button>
+      <p class="status" id="restore-status" role="status"></p>
+      <div class="ah-note">Потеряли код? Можно <button class="ah-linkbtn" type="button" id="restore-reset">создать новые ключи</button>. Старые сообщения станут нечитаемыми, а собеседники увидят предупреждение о смене ключа.</div>
+      <button class="ah-linkbtn" type="button" data-logout>Выйти</button>
+    </form>
+  </section>
+
+  <!-- Приложение -->
+  <section class="ah-app" id="scr-app" hidden>
+    <aside class="ah-side">
+      <div class="ah-me">
+        <span class="ava" id="me-ava"></span>
+        <div class="ah-me__name"><span id="me-handle"></span><small>🔒 E2EE</small></div>
+        <button class="ah-icon-btn" type="button" id="btn-new-group" title="Новая группа" aria-label="Новая группа" data-icon="users"></button>
+        <button class="ah-icon-btn" type="button" id="btn-me" title="Настройки" aria-label="Настройки" data-icon="settings"></button>
+      </div>
+      <form class="ah-search" id="search-form" autocomplete="off">
+        <input class="input" id="search-input" placeholder="@ник собеседника" spellcheck="false" maxlength="21" aria-label="Найти по нику">
+        <button class="ah-icon-btn" type="submit" aria-label="Найти" data-icon="search"></button>
+      </form>
+      <div class="ah-list" id="chat-list" role="list"></div>
+    </aside>
+
+    <section class="ah-chat" id="chat-pane" aria-live="polite">
+      <div class="ah-placeholder" id="chat-empty"><span data-icon="lock"></span><p>Выберите чат слева или найдите собеседника по точному @нику.</p></div>
+    </section>
+  </section>
+</main>
+
+<dialog class="ah-modal" id="ah-modal"><div class="ah-modal__body" id="ah-modal-body"></div></dialog>
+<dialog class="ah-modal ah-img-view" id="ah-img"><img id="ah-img-el" alt="Изображение"></dialog>
+
+<footer class="site-footer" id="site-footer"></footer>
+</body>
+</html>

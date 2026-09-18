@@ -39,6 +39,169 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if signedIn() && request.auth.uid == uid;
       allow write: if false;
+
+      // Чёрный список Муравейника: приватный, виден и меняется только владельцем.
+      match /blocked/{other} {
+        allow read, delete: if member() && request.auth.uid == uid;
+        allow create: if member() && request.auth.uid == uid && other != uid
+          && incoming().keys().hasOnly(['at']) && incoming().at == request.time;
+      }
+    }
+
+    // ═════════════════════════════════════════════════════════════════════
+    // 🐜 МУРАВЕЙНИК — мессенджер со сквозным шифрованием
+    //
+    // Сервер (и админ проекта) видит только метаданные: кто в каком чате и
+    // когда писал. Текст, картинки и названия групп — шифротекст.
+    // Доступ только у аккаунтов email+пароль (анонимные из мини-игр — нет).
+    // ═════════════════════════════════════════════════════════════════════
+    function member() {
+      return signedIn()
+        && request.auth.token.firebase.sign_in_provider == 'password';
+    }
+    function validHandle(h) { return h is string && h.matches('^[a-z0-9_]{3,20}$'); }
+    function validB64(s, max) { return s is string && s.size() > 0 && s.size() <= max && s.matches('^[A-Za-z0-9+/=]+$'); }
+    function validPub(p) {
+      return p is map && p.keys().hasOnly(['dh', 'sig']) && validB64(p.dh, 400) && validB64(p.sig, 400);
+    }
+    function validAvatar(a) {
+      return a == null || (a is string && a.size() <= 60000 && a.matches('^data:image/(webp|jpeg);base64,[A-Za-z0-9+/=]+$'));
+    }
+    function validBio(b) { return b is string && b.size() <= 280; }
+    function hasProfile(uid) { return exists(/databases/$(database)/documents/profiles/$(uid)); }
+    function blockedBy(owner, who) {
+      return exists(/databases/$(database)/documents/users/$(owner)/blocked/$(who));
+    }
+
+    // Публичная карточка: ник, био, аватар, публичные ключи.
+    // Только get по uid — перечислить всех пользователей нельзя.
+    match /profiles/{uid} {
+      allow get: if member();
+      allow list: if false;
+      allow create: if member() && request.auth.uid == uid
+        && incoming().keys().hasOnly(['handle', 'bio', 'avatar', 'pub', 'fp', 'keyVer', 'createdAt', 'updatedAt'])
+        && validHandle(incoming().handle)
+        && getAfter(/databases/$(database)/documents/handles/$(incoming().handle)).data.uid == uid
+        && validBio(incoming().bio) && validAvatar(incoming().avatar)
+        && validPub(incoming().pub) && incoming().fp is string && incoming().fp.size() == 64
+        && incoming().keyVer == 1
+        && incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if member() && request.auth.uid == uid
+        && changed().hasOnly(['bio', 'avatar', 'pub', 'fp', 'keyVer', 'updatedAt'])
+        && validBio(incoming().bio) && validAvatar(incoming().avatar)
+        && validPub(incoming().pub) && incoming().fp is string && incoming().fp.size() == 64
+        // смена ключей (потерян код) обязана поднять версию — клиенты увидят
+        && (incoming().pub == resource.data.pub
+            ? incoming().keyVer == resource.data.keyVer
+            : incoming().keyVer == resource.data.keyVer + 1)
+        && incoming().updatedAt == request.time;
+      allow delete: if member() && request.auth.uid == uid;
+    }
+
+    // Ник → uid. Точный поиск (get), без списка. Ник неизменяем.
+    match /handles/{handle} {
+      allow get: if member();
+      allow list: if false;
+      allow create: if member() && validHandle(handle)
+        && incoming().keys().hasOnly(['uid']) && incoming().uid == request.auth.uid
+        && !exists(/databases/$(database)/documents/profiles/$(request.auth.uid))
+        && getAfter(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.handle == handle;
+      allow update: if false;
+      allow delete: if member() && resource.data.uid == request.auth.uid
+        && !existsAfter(/databases/$(database)/documents/profiles/$(request.auth.uid));
+    }
+
+    // Зашифрованный бэкап ключей: только владелец. Без кода восстановления бесполезен.
+    match /keybackups/{uid} {
+      allow get, delete: if member() && request.auth.uid == uid;
+      allow create, update: if member() && request.auth.uid == uid
+        && incoming().keys().hasOnly(['v', 'iter', 'salt', 'iv', 'ct', 'updatedAt'])
+        && incoming().v == 1 && incoming().iter is int && incoming().iter >= 310000
+        && validB64(incoming().salt, 64) && validB64(incoming().iv, 64) && validB64(incoming().ct, 4000)
+        && incoming().updatedAt == request.time;
+    }
+
+    // Чаты: личные (dm) и группы.
+    function validEnv(e, maxCt) {
+      return e is map && e.keys().hasOnly(['v', 'epk', 'iv', 'ct', 'keys', 'sig'])
+        && e.v == 1 && validB64(e.epk, 400) && validB64(e.iv, 64) && validB64(e.ct, maxCt)
+        && validB64(e.sig, 200) && e['keys'] is map && e['keys'].size() >= 1 && e['keys'].size() <= 50;
+    }
+    function isAnthillAdmin(chat) { return chat.type == 'group' && request.auth.uid in chat.admins; }
+
+    match /chats/{chatId} {
+      allow get, list: if member() && request.auth.uid in resource.data.members;
+
+      allow create: if member() && request.auth.uid in incoming().members
+        && incoming().members is list
+        && incoming().createdAt == request.time && incoming().updatedAt == request.time
+        && (
+          // личный чат: ровно двое, у собеседника есть профиль и он нас не блокировал
+          (incoming().type == 'dm'
+            && incoming().keys().hasOnly(['type', 'members', 'createdAt', 'updatedAt'])
+            && incoming().members.size() == 2
+            && incoming().members[0] != incoming().members[1]
+            && hasProfile(incoming().members.removeAll([request.auth.uid])[0])
+            && !blockedBy(incoming().members.removeAll([request.auth.uid])[0], request.auth.uid))
+          ||
+          // группа: создатель — единственный админ
+          (incoming().type == 'group'
+            && incoming().keys().hasOnly(['type', 'members', 'admins', 'meta', 'metaBy', 'createdBy', 'createdAt', 'updatedAt'])
+            && incoming().metaBy == request.auth.uid
+            && incoming().members.size() >= 2 && incoming().members.size() <= 50
+            && incoming().admins == [request.auth.uid]
+            && incoming().createdBy == request.auth.uid
+            && validEnv(incoming().meta, 2000))
+        );
+
+      allow update: if member() && request.auth.uid in resource.data.members
+        && incoming().type == resource.data.type
+        && incoming().updatedAt == request.time
+        && (
+          // любой участник: «поднять» чат (новое сообщение)
+          changed().hasOnly(['updatedAt'])
+          ||
+          // админ группы: состав, админы, зашифрованное название
+          (isAnthillAdmin(resource.data)
+            && changed().hasOnly(['members', 'admins', 'meta', 'metaBy', 'updatedAt'])
+            && incoming().members.size() >= 1 && incoming().members.size() <= 50
+            && incoming().members.hasAll(incoming().admins)
+            && validEnv(incoming().meta, 2000)
+            // название перешифровал — значит, подписал он
+            && (incoming().meta == resource.data.meta || incoming().metaBy == request.auth.uid))
+          ||
+          // участник группы выходит сам
+          (resource.data.type == 'group'
+            && changed().hasOnly(['members', 'admins', 'updatedAt'])
+            && incoming().members == resource.data.members.removeAll([request.auth.uid])
+            && incoming().admins == resource.data.admins.removeAll([request.auth.uid]))
+        );
+
+      allow delete: if member() && (
+        (resource.data.type == 'dm' && request.auth.uid in resource.data.members)
+        || isAnthillAdmin(resource.data)
+      );
+
+      // Сообщения: неизменяемые шифроконверты.
+      function chat() { return get(/databases/$(database)/documents/chats/$(chatId)).data; }
+
+      match /messages/{msgId} {
+        allow get, list: if member() && request.auth.uid in chat().members;
+        allow create: if member()
+          && incoming().keys().hasOnly(['sender', 'createdAt', 'env'])
+          && incoming().sender == request.auth.uid
+          && incoming().createdAt == request.time
+          && request.auth.uid in chat().members
+          && validEnv(incoming().env, 750000)
+          && chat().members.hasAll(incoming().env['keys'].keys())
+          && (chat().type == 'group'
+              || !blockedBy(chat().members.removeAll([request.auth.uid])[0], request.auth.uid));
+        allow update: if false;
+        allow delete: if member() && (
+          resource.data.sender == request.auth.uid
+          || (chat().type == 'group' && request.auth.uid in chat().admins)
+        );
+      }
     }
 
     // ── Блог ───────────────────────────────────────────────────────────────
