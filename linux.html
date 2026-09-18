@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; require-trusted-types-for 'script'; trusted-types 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
+<title>Игры на Linux — EgorNetwork</title>
+<meta name="description" content="Как запустить игры EgorNetwork на Linux через Wine или Proton.">
+<meta name="theme-color" content="#07080b">
+<link rel="icon" href="assets/img/favicon-32.png" type="image/png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/css/site.css">
+<script src="assets/js/site.js"></script>
+</head>
+<body>
+<header class="site-header" id="site-header"></header>
+
+<main id="main" class="wrap">
+  <section class="page-head">
+    <span class="eyebrow reveal">Гайд</span>
+    <h1 class="reveal d-1">Игры на Linux</h1>
+    <p class="lead reveal d-2">Большинство Windows-игр отлично запускаются на Linux через Wine или Proton (Steam Play).</p>
+  </section>
+
+  <div class="grid grid--2" data-stagger>
+    <article class="card">
+      <h3>Установка через Wine</h3>
+      <ol class="steps mt-s">
+        <li>Установите Wine (Debian / Ubuntu):
+          <div class="code"><code id="cmd-wine">sudo apt install wine</code><button class="copy-btn" type="button" data-copy-from="cmd-wine">Копировать</button></div>
+        </li>
+        <li>Или включите Proton в Steam: <strong>Настройки → Steam Play → Включить Steam Play</strong>.</li>
+        <li>Запустите установщик игры через Wine:
+          <div class="code"><code id="cmd-run">wine Installer.exe</code><button class="copy-btn" type="button" data-copy-from="cmd-run">Копировать</button></div>
+        </li>
+        <li>Следуйте инструкциям установщика.</li>
+      </ol>
+      <div class="btn-row mt-m">
+        <a class="btn btn--ghost btn--sm" href="https://gitlab.winehq.org/wine/wine/-/wikis/Debian-Ubuntu" target="_blank" rel="noopener noreferrer">Подробно на сайте Wine <span data-icon="arrow-up-right"></span></a>
+      </div>
+    </article>
+
+    <article class="card">
+      <h3>Проблемы и решения</h3>
+      <ul class="prose mt-s">
+        <li><strong>Игра не запускается</strong> — доставьте зависимости через <code>winetricks</code>.</li>
+        <li><strong>Нет звука</strong> — проверьте аудио-драйвер в <code>winecfg</code>.</li>
+        <li><strong>Низкая производительность</strong> — попробуйте Proton Experimental.</li>
+      </ul>
+    </article>
+  </div>
+
+  <section class="section--tight">
+    <div class="card callout reveal">
+      <div><h3>Нужна помощь?</h3><p>Напишите в наш Discord — поможем разобраться.</p></div>
+      <a class="btn btn--primary" href="https://discord.gg/4e3wN9t79R" target="_blank" rel="noopener noreferrer">Discord <span data-icon="arrow-up-right"></span></a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer" id="site-footer"></footer>
+</body>
+</html>

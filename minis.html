@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self'; connect-src 'self' blob: https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src https://egornetwork-5600d.firebaseapp.com; base-uri 'none'; form-action 'none'; object-src 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
+<title>Мини-игры — EgorNetwork</title>
+<meta name="description" content="Семь аркад в браузере: тетрис, змейка, раннер и другие. Таблица рекордов и онлайн-дуэли.">
+<meta name="theme-color" content="#040410">
+<link rel="icon" href="assets/img/favicon-32.png" type="image/png">
+<link rel="stylesheet" href="assets/css/minis.css">
+</head>
+<body>
+<canvas id="menu-canvas"></canvas>
+<canvas id="cartridge-canvas"></canvas>
+
+<div class="crt-flicker" id="crt-flicker"></div>
+<div class="cart-eject-label" id="cart-eject-label">INSERTING...</div>
+
+<div id="saturnIntro">
+<canvas id="introCanvas"></canvas>
+<div class="skipIntro" data-act="endSaturnIntro">SKIP</div>
+<audio id="saturnBoot" src="assets/sound/saturn-startup.mp3"></audio>
+</div>
+
+<div class="scanlines"></div>
+
+<header>
+  <h1>// MINI_GAMES //</h1>
+  <p>EgorNetwork Entertainment System &mdash; v2.0</p>
+  <a href="index.html" class="back-to-index">◄ EGORNETWORK</a>
+  <div class="header-badges">
+    <button class="auth-mini-btn" id="auth-mini-btn" type="button" data-act="toggleAuthModal" title="Сменить ник">[ PLAYER ]</button>
+  </div>
+</header>
+
+<!-- Ник игрока -->
+<div class="auth-modal" id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="nick-title">
+  <div class="auth-backdrop" data-act="toggleAuthModal"></div>
+  <div class="auth-container">
+    <button class="auth-close" type="button" data-act="toggleAuthModal" aria-label="Закрыть">&times;</button>
+    <div class="auth-form">
+      <h2 class="auth-title" id="nick-title">ТВОЙ НИК</h2>
+      <p class="auth-subtitle">ВИДЕН В ТАБЛИЦЕ РЕКОРДОВ И ОНЛАЙН-ИГРАХ</p>
+      <div class="auth-field">
+        <label for="nick-input">НИКНЕЙМ</label>
+        <input type="text" id="nick-input" maxlength="20" autocomplete="off" spellcheck="false">
+      </div>
+      <p class="auth-subtitle nick-warn">НЕ ИСПОЛЬЗУЙ РЕАЛЬНОЕ ИМЯ — ТАБЛИЦА ПУБЛИЧНАЯ.<br>2–20 СИМВОЛОВ: БУКВЫ, ЦИФРЫ, ПРОБЕЛ, _ . -</p>
+      <div class="auth-error" id="nick-error"></div>
+      <button class="auth-submit" type="button" id="nick-submit">СОХРАНИТЬ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ КАТАЛОГ ============ -->
+<div class="game-catalog" id="game-catalog">
+  <div class="catalog-header">
+    <h2>SELECT YOUR GAME</h2>
+    <p>INSERT CARTRIDGE TO PLAY</p>
+  </div>
+
+  <!-- Мобильный список (виден только на < 700px) -->
+  <div class="mobile-game-list">
+    <button class="mobile-game-btn" data-act="openGame" data-arg="tetris">3D TETRIS</button>
+    <button class="mobile-game-btn" data-act="openGame" data-arg="runner">PARKOUR RUNNER</button>
+    <button class="mobile-game-btn" data-act="openGame" data-arg="snake">CYBER SNAKE</button>
+    <button class="mobile-game-btn" data-act="openGame" data-arg="starfighter">STARFIGHTER</button>
+    <button class="mobile-game-btn" data-act="openGame" data-arg="asteroid">ASTEROID DEFENSE</button>
+    <button class="mobile-game-btn" data-act="openGame" data-arg="varoom">VAROOM</button>
+    <button class="mobile-game-btn" data-act="openGame" data-arg="cosmic">COSMIC DEFENDER</button>
+   </div>
+
+  <div class="catalog-hint">
+    🖱️ HOVER & CLICK A CARTRIDGE &nbsp;|&nbsp; ⌨️ ← → + ENTER &nbsp;|&nbsp; ESC TO RETURN FROM GAME
+  </div>
+</div>
+
+<!-- Leaderboard Panel -->
+<div class="leaderboard-panel" id="leaderboard-panel">
+  <h3>▓ GLOBAL LEADERBOARD ▓</h3>
+  <div class="lb-tabs">
+    <button class="lb-tab active" data-game="tetris" data-act="switchLeaderboard" data-arg="tetris">TETRIS</button>
+    <button class="lb-tab" data-game="runner" data-act="switchLeaderboard" data-arg="runner">RUNNER</button>
+    <button class="lb-tab" data-game="snake" data-act="switchLeaderboard" data-arg="snake">SNAKE</button>
+    <button class="lb-tab" data-game="starfighter" data-act="switchLeaderboard" data-arg="starfighter">STARFIGHTER</button>
+    <button class="lb-tab" data-game="asteroid" data-act="switchLeaderboard" data-arg="asteroid">ASTEROID</button>
+    <button class="lb-tab" data-game="varoom" data-act="switchLeaderboard" data-arg="varoom">VAROOM</button>
+    <button class="lb-tab" data-game="cosmic" data-act="switchLeaderboard" data-arg="cosmic">COSMIC</button>
+   </div>
+  <div class="lb-entries" id="lb-entries">
+    <div class="lb-loading">LOADING...</div>
+  </div>
+</div>
+
+<!-- Инфо-блок выбранного картриджа -->
+<div class="selected-info" id="selected-info">
+  <h3 id="sel-title"></h3>
+  <p id="sel-desc"></p>
+  <div class="best-score" id="sel-best"></div>
+</div>
+
+<!-- ============ ИГРОВЫЕ ПАНЕЛИ ============ -->
+<div class="game-wrapper">
+
+  <div id="panel-tetris" class="game-panel">
+    <div class="panel-nav">
+      <button class="back-btn" data-act="backToCatalog">◄ BACK TO GAMES</button>
+      <div class="panel-title">3D TETRIS</div>
+      <div style="width:120px"></div>
+    </div>
+    
+    <!-- Single Player HUD -->
+    <div class="hud" id="t-hud-single">
+      <span>SCORE:&nbsp;<b id="t-score">0</b></span>
+      <span>LEVEL:&nbsp;<b id="t-level">1</b></span>
+      <span>LINES:&nbsp;<b id="t-lines">0</b></span>
+      <div class="hud-right" id="t-next-wrap">
+        <span>NEXT:</span>
+        <canvas id="t-next-canvas" width="72" height="72"></canvas>
+        <span style="margin-left:8px">HOLD:</span>
+        <canvas id="t-hold-canvas" width="72" height="72"></canvas>
+      </div>
+    </div>
+    
+    <!-- Duel HUD (hidden by default) -->
+    <div class="hud" id="t-hud-duel" style="display:none;justify-content:space-between;">
+      <span style="color:var(--cyan);">P1 <b id="td-p1-score">0</b> | <b id="td-p1-lines">0</b>L</span>
+      <span id="td-vs" style="color:var(--pink);font-weight:bold;text-shadow:var(--gpink);">VS</span>
+      <span style="color:var(--yellow);">P2 <b id="td-p2-score">0</b> | <b id="td-p2-lines">0</b>L</span>
+    </div>
+    
+    <!-- Single canvas for single player -->
+    <div class="canvas-wrap" id="t-canvas-single" style="height:560px;">
+      <canvas id="tetris-canvas"></canvas>
+      <div class="overlay" id="tetris-overlay">
+        <h2>3D TETRIS</h2>
+        <div class="subtitle">CLASSIC GAME IN THREE DIMENSIONS</div>
+        <button class="start-btn" data-act="startTetris">[ START GAME ]</button>
+        <button class="start-btn mp-btn" data-act="startTetrisMultiplayer" style="border-color:#cc00ff;color:#cc00ff;">[ LOCAL DUEL (2P) ]</button>
+        <button class="start-btn mp-btn" data-act="startTetrisGlobalMultiplayer" style="border-color:#00ff88;color:#00ff88;box-shadow:0 0 8px #00ff88,0 0 20px rgba(0,255,136,.3);">[ GLOBAL ONLINE (2P) ]</button>
+      </div>
+    </div>
+    
+    <!-- Dual canvases for duel mode (hidden by default) -->
+    <div id="t-canvas-duel" style="display:none;gap:4px;width:100%;">
+      <div class="canvas-wrap" style="flex:1;height:520px;">
+        <div style="position:absolute;top:4px;left:8px;z-index:5;color:var(--cyan);font-size:.6rem;text-shadow:0 0 6px #00ffcc;">P1 <span id="td-p1-lines-inline">0</span>L</div>
+        <canvas id="tetris-p1-canvas"></canvas>
+        <div class="overlay" id="tetris-p1-overlay" style="display:none;">
+          <h2 style="font-size:1.6rem;">GAME OVER</h2>
+          <div class="subtitle">P1 ELIMINATED</div>
+        </div>
+      </div>
+      <div class="canvas-wrap" style="flex:1;height:520px;">
+        <div style="position:absolute;top:4px;left:8px;z-index:5;color:var(--yellow);font-size:.6rem;text-shadow:0 0 6px #ffee00;">P2 <span id="td-p2-lines-inline">0</span>L</div>
+        <canvas id="tetris-p2-canvas"></canvas>
+        <div class="overlay" id="tetris-p2-overlay" style="display:none;">
+          <h2 style="font-size:1.6rem;">GAME OVER</h2>
+          <div class="subtitle">P2 ELIMINATED</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Duel Results Overlay -->
+    <div class="overlay" id="tetris-duel-overlay" style="display:none;position:relative;z-index:20;border:1px solid var(--pink);">
+      <h2 id="td-result-title">DUEL OVER</h2>
+      <div class="score-big" id="td-result-text"></div>
+      <div class="subtitle" id="td-result-scores"></div>
+      <button class="start-btn" data-act="startTetrisMultiplayer">[ DUEL AGAIN ]</button>
+      <button class="start-btn" data-act="startTetris">[ SINGLE PLAYER ]</button>
+      <button class="start-btn" data-act="backToCatalog" style="margin-top:6px;border-color:var(--pink);color:var(--pink);box-shadow:var(--gpink);">[ BACK TO GAMES ]</button>
+    </div>
+    
+    <div class="hint">← → MOVE &nbsp;|&nbsp; ↑ / Z ROTATE &nbsp;|&nbsp; ↓ SOFT DROP &nbsp;|&nbsp; SPACE HARD DROP &nbsp;|&nbsp; C HOLD &nbsp;|&nbsp; ESC BACK</div>
+  </div>
+
+  <div id="panel-runner" class="game-panel">
+    <div class="panel-nav">
+      <button class="back-btn" data-act="backToCatalog">◄ BACK TO GAMES</button>
+      <div class="panel-title">PARKOUR RUNNER</div>
+      <div style="width:120px"></div>
+    </div>
+    <div class="hud">
+      <span>DIST:&nbsp;<b id="r-dist">0</b>m</span>
+      <span>SPEED:&nbsp;<b id="r-speed">1.0</b>x</span>
+      <div class="hud-right"><span>BEST:&nbsp;<b id="r-best">0</b>m</span></div>
+    </div>
+    <div class="canvas-wrap" style="height:560px;">
+      <canvas id="runner-canvas"></canvas>
+      <div class="overlay" id="runner-overlay">
+        <h2>PARKOUR RUNNER</h2>
+        <div class="subtitle">INFINITE CUBE RUNNER IN 3D SPACE</div>
+        <button class="start-btn" data-act="startRunner">[ START GAME ]</button>
+      </div>
+    </div>
+    <div class="hint">SPACE / CLICK / ↑ — JUMP &nbsp;|&nbsp; DOUBLE JUMP ALLOWED &nbsp;|&nbsp; ESC BACK</div>
+  </div>
+
+  <div id="panel-snake" class="game-panel">
+    <div class="panel-nav">
+      <button class="back-btn" data-act="backToCatalog">◄ BACK TO GAMES</button>
+      <div class="panel-title">CYBER SNAKE</div>
+      <div style="width:120px"></div>
+    </div>
+    <div class="hud">
+      <span>SCORE:&nbsp;<b id="s-score">0</b></span>
+      <span id="s-p2-score">P2:&nbsp;<b id="s2-score">0</b></span>
+      <span>MULT:&nbsp;<b id="s-multi">×1</b></span>
+      <span id="s-effect"></span>
+      <div class="hud-right"><span>BEST:&nbsp;<b id="s-high">0</b></span></div>
+    </div>
+    <div class="canvas-wrap" style="position:relative;">
+      <canvas id="snake-canvas" width="600" height="600" style="width:100%;max-width:600px;display:block;margin:0 auto;"></canvas>
+      <div class="overlay" id="snake-overlay">
+        <h2>CYBER SNAKE</h2>
+        <div class="subtitle">DATA STREAM IN THE GRID</div>
+        <button class="start-btn" data-act="startSnake">[ SINGLE PLAYER ]</button>
+        <button class="start-btn mp-btn" data-act="startSnakeMultiplayer">[ CO-OP LOCAL (2P) ]</button>
+        <button class="start-btn mp-btn" data-act="startSnakeGlobalMultiplayer" style="border-color:#00ff88;color:#00ff88;box-shadow:0 0 8px #00ff88,0 0 20px rgba(0,255,136,.3);">[ GLOBAL ONLINE (2P) ]</button>
+      </div>
+    </div>
+    <div class="hint">P1: WASD — MOVE &nbsp;|&nbsp; P2: ← → ↑ ↓ — MOVE &nbsp;|&nbsp; ONLINE: REAL-TIME WITH A PARTNER! &nbsp;|&nbsp; ESC BACK</div>
+  </div>
+
+  <div id="panel-starfighter" class="game-panel">
+    <div class="panel-nav">
+      <button class="back-btn" data-act="backToCatalog">◄ BACK TO GAMES</button>
+      <div class="panel-title">STARFIGHTER: VOID ASSAULT</div>
+      <div style="width:120px"></div>
+    </div>
+    <div class="hud">
+      <span>SCORE:&nbsp;<b id="sf-score">0</b></span>
+      <span>WAVE:&nbsp;<b id="sf-wave">1</b></span>
+      <span id="sf-power" style="color:var(--yellow)"></span>
+      <div class="hud-right"><span>LIVES:&nbsp;<b id="sf-lives">❤❤❤</b></span></div>
+    </div>
+    <div class="canvas-wrap" style="height:560px;">
+      <canvas id="sf-canvas"></canvas>
+      <div class="overlay" id="sf-overlay">
+        <h2>STARFIGHTER</h2>
+        <div class="subtitle">VOID ASSAULT — SURVIVE THE SWARM</div>
+        <button class="start-btn" data-act="startStarfighter">[ LAUNCH ]</button>
+      </div>
+    </div>
+    <div class="hint">MOUSE — AIM &nbsp;|&nbsp; SPACE / CLICK — FIRE &nbsp;|&nbsp; COLLECT GREEN RINGS FOR POWER-UPS &nbsp;|&nbsp; ESC BACK</div>
+  </div>
+
+  <div id="panel-asteroid" class="game-panel">
+    <div class="panel-nav">
+      <button class="back-btn" data-act="backToCatalog">◄ BACK TO GAMES</button>
+      <div class="panel-title">ASTEROID DEFENSE: ORBITAL</div>
+      <div style="width:120px"></div>
+    </div>
+    <div class="hud">
+      <span>SCORE:&nbsp;<b id="ad-score">0</b></span>
+      <span>WAVE:&nbsp;<b id="ad-wave">1</b></span>
+      <div class="hud-right"><span>PLANET HP:&nbsp;<b id="ad-hp" style="color:var(--cyan);letter-spacing:.05em">█████</b></span></div>
+    </div>
+    <div class="canvas-wrap" style="height:560px;">
+      <canvas id="ad-canvas"></canvas>
+      <div class="overlay" id="ad-overlay">
+        <h2>ASTEROID DEFENSE</h2>
+        <div class="subtitle">ORBITAL TURRET — DEFEND THE HOMELAND</div>
+        <button class="start-btn" data-act="startAsteroidDefense">[ DEPLOY TURRET ]</button>
+      </div>
+    </div>
+    <div class="hint">MOUSE — AIM TURRET &nbsp;|&nbsp; CLICK / SPACE — FIRE &nbsp;|&nbsp; BIGGER ASTEROIDS = MORE HP &nbsp;|&nbsp; ESC BACK</div>
+  </div>
+
+  <div id="panel-varoom" class="game-panel">
+    <div class="panel-nav">
+      <button class="back-btn" data-act="backToCatalog">◄ BACK TO GAMES</button>
+      <div class="panel-title">VAROOM</div>
+      <div style="width:120px"></div>
+    </div>
+    <div class="hud">
+      <span>SPEED:&nbsp;<b id="v-speed">0 km/h</b></span>
+      <span>DIST:&nbsp;<b id="v-dist">0</b>m</span>
+      <span>SCORE:&nbsp;<b id="v-score">0</b></span>
+      <div class="hud-right"><span>BEST:&nbsp;<b id="v-best">0</b></span></div>
+    </div>
+    <div class="canvas-wrap" style="height:560px;">
+      <canvas id="varoom-canvas"></canvas>
+      <div class="overlay" id="varoom-overlay">
+        <h2>VAROOM</h2>
+        <div class="subtitle">TEMPLE OS STYLE PSEUDO-3D RACER</div>
+        <button class="start-btn" data-act="startVaroom">[ START ENGINE ]</button>
+      </div>
+    </div>
+    <div class="hint">← → / A D — STEER &nbsp;|&nbsp; ↑ / W — ACCELERATE &nbsp;|&nbsp; ↓ / S — BRAKE &nbsp;|&nbsp; ESC BACK</div>
+   </div>
+
+   <div id="panel-cosmic" class="game-panel">
+     <div class="panel-nav">
+       <button class="back-btn" data-act="backToCatalog">◄ BACK TO GAMES</button>
+       <div class="panel-title">COSMIC DEFENDER</div>
+       <div style="width:120px"></div>
+     </div>
+     <div class="hud">
+       <span>SCORE:&nbsp;<b id="c-score">0</b></span>
+       <span>WAVE:&nbsp;<b id="c-wave">1</b></span>
+       <span>HIT:&nbsp;<b id="c-hits">0</b></span>
+       <span>MISSED:&nbsp;<b id="c-missed">0</b></span>
+       <div class="hud-right"><span>BEST:&nbsp;<b id="c-best">0</b></span></div>
+     </div>
+     <div class="canvas-wrap" style="height:560px;">
+       <canvas id="cosmic-canvas"></canvas>
+       <div class="overlay" id="cosmic-overlay">
+         <h2>COSMIC DEFENDER</h2>
+         <div class="subtitle">SPACE INVADERS STYLE DEFENSE</div>
+         <button class="start-btn" data-act="startCosmic">[ LAUNCH MISSION ]</button>
+       </div>
+     </div>
+     <div class="hint">MOUSE — AIM &nbsp;|&nbsp; CLICK / SPACE — FIRE &nbsp;|&nbsp; PROTECT BLUE CITIES &nbsp;|&nbsp; ESC BACK</div>
+   </div>
+ </div>
+
+<script src="assets/vendor/three/three.min.js"></script>
+<script src="assets/vendor/three/GLTFLoader.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app-compat.js" integrity="sha384-Uv5NOxmI4D88FRrXAe7tQNnStDeQK/nnWkSogirw0xr1ZlJhTpk64V2KxKejMfys" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-auth-compat.js" integrity="sha384-P44Lc4FFaOc/XnFQzAIpmmZZpAstRvYwQLiHHU5LHtlBmblzk5gCbsRCe4hJY6IN" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore-compat.js" integrity="sha384-+mJynELdmYgerSPOJua2KFssOXmteKEsil0rhX2Pb8SkqF7j6lHJszb4/K90oC0u" crossorigin="anonymous"></script>
+<script src="assets/js/firebase-init.js"></script>
+<script src="assets/js/minis.js"></script>
+<script src="assets/js/minis-intro.js"></script>
+</body>
+</html>

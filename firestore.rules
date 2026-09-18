@@ -1,0 +1,136 @@
+rules_version = '2';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EgorNetwork — Firestore Security Rules (v2, после чистки сайта)
+//
+// Принцип: всё запрещено, кроме явно перечисленного ниже.
+// Коллекции старой соцсети (conversations, groups, calls, groupCalls,
+// live_channels, comments, minis_leaderboard, minis_presence) больше
+// НЕ доступны клиентам — их данные стоит удалить в консоли Firebase.
+//
+// Деплой:  firebase deploy --only firestore:rules
+// ═══════════════════════════════════════════════════════════════════════════
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── helpers ────────────────────────────────────────────────────────────
+    function signedIn() { return request.auth != null; }
+
+    function isAdmin() {
+      // Анонимные аккаунты админом быть не могут.
+      return signedIn()
+        && request.auth.token.firebase.sign_in_provider != 'anonymous'
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Публичный ник: 2–20 символов, буквы/цифры/пробел/_ . -
+    function validName(n) {
+      return n is string && n.matches('^[A-Za-zА-Яа-яЁё0-9_ .\\-]{2,20}$');
+    }
+
+    function incoming() { return request.resource.data; }
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+
+    // ── Пользователи ───────────────────────────────────────────────────────
+    // Раньше любой залогиненный мог читать ВСЕ профили (с email'ами).
+    // Теперь — только свой документ. Писать с клиента нельзя вообще:
+    // роль admin выдаётся вручную в консоли.
+    match /users/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // ── Блог ───────────────────────────────────────────────────────────────
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if isAdmin()
+        && incoming().keys().hasOnly(['title', 'text', 'createdAt'])
+        && incoming().title is string && incoming().title.size() > 0 && incoming().title.size() <= 140
+        && incoming().text is string && incoming().text.size() > 0 && incoming().text.size() <= 20000
+        && incoming().createdAt == request.time;
+      // update нужен админу для чистки старых полей author/authorUid.
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Мини-игры: таблица рекордов ────────────────────────────────────────
+    // minis_scores/{game}/entries/{uid}: писать можно только в свою запись,
+    // только валидный ник, целый счёт в разумных пределах и не ниже прежнего.
+    function validGame(game) {
+      return game in ['tetris', 'runner', 'snake', 'starfighter', 'asteroid', 'varoom', 'cosmic'];
+    }
+    function validEntry() {
+      return incoming().keys().hasOnly(['name', 'score', 'updatedAt'])
+        && incoming().keys().hasAll(['name', 'score', 'updatedAt'])
+        && validName(incoming().name)
+        && incoming().score is int
+        && incoming().score > 0 && incoming().score <= 100000000
+        && incoming().updatedAt == request.time;
+    }
+    match /minis_scores/{game}/entries/{uid} {
+      allow read: if validGame(game);
+      allow create: if signedIn() && request.auth.uid == uid && validGame(game) && validEntry();
+      allow update: if signedIn() && request.auth.uid == uid && validGame(game) && validEntry()
+        && incoming().score >= resource.data.score;
+      allow delete: if false;
+    }
+
+    // ── Мини-игры: онлайн-лобби (Tetris / Snake) ───────────────────────────
+    // Раньше любой залогиненный мог читать/писать/удалять ЛЮБОЕ лобби.
+    // Теперь: создать — только за себя как p1; войти — только за себя как p2
+    // в чужое ожидающее лобби; дальше каждый игрок пишет только своё поле.
+    function validPlayer(p, uid) {
+      return p is map
+        && p.keys().hasOnly(['uid', 'name', 'score', 'lines', 'level', 'connected', 'lastUpdate', 'x', 'y', 'dir', 'snake'])
+        && p.uid == uid
+        && validName(p.name)
+        && (!('score' in p) || (p.score is int && p.score >= 0 && p.score <= 100000000))
+        && (!('snake' in p) || (p.snake is list && p.snake.size() <= 600));
+    }
+    function isP1() { return resource.data.p1.uid == request.auth.uid; }
+    function isP2() { return resource.data.p2 != null && resource.data.p2.uid == request.auth.uid; }
+    function statusOk() {
+      return incoming().status == resource.data.status || incoming().status == 'ended';
+    }
+    match /{lobbies}/{lobbyId} {
+      allow read: if signedIn() && lobbies in ['tetris_global', 'snake_global'];
+
+      allow create: if signedIn() && lobbies in ['tetris_global', 'snake_global']
+        && incoming().keys().hasOnly(['status', 'p1', 'p2', 'createdAt', 'ping'])
+        && incoming().status == 'waiting'
+        && validPlayer(incoming().p1, request.auth.uid)
+        && incoming().p2 == null
+        && incoming().createdAt == request.time;
+
+      allow update: if signedIn() && lobbies in ['tetris_global', 'snake_global'] && (
+        // p2 входит в чужое ожидающее лобби
+        (resource.data.status == 'waiting' && !isP1()
+          && changed().hasOnly(['status', 'p2', 'startTime'])
+          && incoming().status == 'playing'
+          && validPlayer(incoming().p2, request.auth.uid)
+          && incoming().startTime == request.time)
+        ||
+        // p1 обновляет только себя (+ ping/статус завершения)
+        (isP1()
+          && changed().hasOnly(['p1', 'status', 'endedAt', 'ping'])
+          && validPlayer(incoming().p1, request.auth.uid)
+          && incoming().p1.name == resource.data.p1.name
+          && statusOk())
+        ||
+        // p2 обновляет только себя
+        (isP2()
+          && changed().hasOnly(['p2', 'status', 'endedAt'])
+          && validPlayer(incoming().p2, request.auth.uid)
+          && incoming().p2.name == resource.data.p2.name
+          && statusOk())
+      );
+
+      // Удалить: участник — всегда; кто угодно — только протухшее лобби.
+      allow delete: if signedIn() && lobbies in ['tetris_global', 'snake_global'] && (
+        isP1() || isP2()
+        || (resource.data.createdAt is timestamp && request.time > resource.data.createdAt + duration.value(10, 'm'))
+        || (resource.data.ping is int && request.time.toMillis() - resource.data.ping > 60000)
+      );
+    }
+  }
+}

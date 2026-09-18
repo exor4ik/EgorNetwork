@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; require-trusted-types-for 'script'; trusted-types 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
+<title>EgorNetwork — инди-студия игр</title>
+<meta name="description" content="EgorNetwork — инди-студия: игры для ПК и Android, мини-игры в браузере, блог и полезные инструменты.">
+<meta name="theme-color" content="#07080b">
+<meta property="og:title" content="EgorNetwork">
+<meta property="og:description" content="Инди-студия. Мы делаем игры.">
+<meta property="og:type" content="website">
+<link rel="icon" href="assets/img/favicon-32.png" type="image/png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="preload" href="assets/fonts/unbounded-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/site.css">
+<script src="assets/js/site.js"></script>
+<script src="assets/js/home.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="site-header"></header>
+
+<main id="main">
+  <section class="hero wrap" aria-labelledby="hero-title">
+    <div class="hero__mark" aria-hidden="true"><img src="assets/img/logo-mark.webp" alt="" width="512" height="512"></div>
+    <span class="eyebrow reveal">Инди-студия · с 2024</span>
+    <h1 class="hero__title" id="hero-title" aria-label="EgorNetwork">
+      <span class="line" data-split>Egor</span>
+      <span class="line outline" data-split>Network</span>
+    </h1>
+    <div class="hero__row">
+      <p class="lead reveal d-3">Мы делаем игры: от культового кликера про кондиции до бесконечных лабиринтов под землёй. А ещё — аркады прямо в браузере.</p>
+      <div class="btn-row reveal d-4">
+        <a class="btn btn--primary" href="games.html">Наши игры <span data-icon="arrow" data-icon-class="arrow"></span></a>
+        <a class="btn" href="minis.html">Мини-игры</a>
+      </div>
+    </div>
+    <div class="scroll-cue reveal d-6 mt-xl"><i></i> листай</div>
+  </section>
+
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee__track">
+      <span class="marquee__item">Симулятор Кондиций</span>
+      <span class="marquee__item">Катакомбы</span>
+      <span class="marquee__item">Телики</span>
+      <span class="marquee__item">Recompiled</span>
+      <span class="marquee__item">Мини-игры</span>
+      <span class="marquee__item">Симулятор Кондиций</span>
+      <span class="marquee__item">Катакомбы</span>
+      <span class="marquee__item">Телики</span>
+      <span class="marquee__item">Recompiled</span>
+      <span class="marquee__item">Мини-игры</span>
+    </div>
+  </div>
+
+  <section class="section wrap" aria-labelledby="projects-title">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow reveal">01 / Проекты</span>
+        <h2 id="projects-title" class="reveal d-1">Над чем работаем</h2>
+      </div>
+      <a class="btn btn--ghost btn--sm reveal d-2" href="games.html">Все игры <span data-icon="arrow" data-icon-class="arrow"></span></a>
+    </div>
+
+    <div class="bento" data-stagger>
+      <article class="card project project--feature span-4">
+        <img class="project__cover" src="assets/img/games/conditions-classic.webp" alt="" width="256" height="256" loading="lazy">
+        <div class="project__top">
+          <span class="chip chip--ok">Опубликовано · LTS</span>
+        </div>
+        <h3>Симулятор Кондиций: Classic</h3>
+        <p>Культовая игра-кликер и первый проект студии. Сделана в Clickteam Fusion 2.5.</p>
+        <div class="btn-row">
+          <a class="btn btn--primary btn--sm" href="games.html#conditions">Скачать <span data-icon="download"></span></a>
+        </div>
+      </article>
+
+      <a class="card card--link project span-2" href="minis.html">
+        <span data-icon="arrow-up-right" data-icon-class="card__arrow"></span>
+        <div class="project__top"><span class="chip chip--new">В браузере</span></div>
+        <h3>Мини-игры</h3>
+        <p>Тетрис, змейка, раннер и ещё четыре аркады. Таблица рекордов и онлайн-дуэли.</p>
+      </a>
+
+      <a class="card card--link project span-2" href="games.html#catacombs">
+        <span data-icon="arrow-up-right" data-icon-class="card__arrow"></span>
+        <div class="project__top"><span class="chip chip--dev">В разработке</span></div>
+        <h3>Катакомбы</h3>
+        <p>Бесконечный лабиринт, ключи и загадочный торговец оружием. Зачем оно глубоко под землёй?..</p>
+      </a>
+
+      <a class="card card--link project span-2" href="games.html#recompiled">
+        <span data-icon="arrow-up-right" data-icon-class="card__arrow"></span>
+        <div class="project__top"><span class="chip chip--dev">Начало разработки</span></div>
+        <h3>Кондиции: Recompiled</h3>
+        <p>Сиквел легендарной игры про кидание кондиций — теперь на Unity.</p>
+      </a>
+
+      <a class="card card--link project span-2" href="games.html#teliki">
+        <span data-icon="arrow-up-right" data-icon-class="card__arrow"></span>
+        <div class="project__top"><span class="chip chip--dev">Начало разработки</span></div>
+        <h3>Телики</h3>
+        <p>Плоскость из мониторов, бонусы и поиск выхода.</p>
+      </a>
+    </div>
+  </section>
+
+  <section class="section wrap" aria-labelledby="season-title">
+    <div class="section-head">
+      <div>
+        <span class="eyebrow reveal">02 / Отдых</span>
+        <h2 id="season-title" class="reveal d-1">Пока ждёшь релизы</h2>
+      </div>
+    </div>
+    <div class="season">
+      <article class="card reveal" aria-live="polite">
+        <span class="chip chip--new" id="season-chip">countdown</span>
+        <h3 id="season-q" class="mt-m">Эй, когда уже лето?</h3>
+        <p id="season-a">Считаем…</p>
+        <div class="counter" id="counter" aria-hidden="true"></div>
+        <div class="bar"><i id="season-bar"></i></div>
+        <p class="hint mono mt-xs" id="season-meta"></p>
+      </article>
+
+      <div class="term reveal d-1">
+        <div class="term__bar" aria-hidden="true"><i></i><i></i><i></i><span>guest@egornetwork:~</span></div>
+        <div class="term__out" id="term-out" role="log" aria-live="polite"></div>
+        <form class="term__form" id="term-form" autocomplete="off">
+          <label for="term-in">›</label>
+          <input id="term-in" type="text" spellcheck="false" maxlength="120" placeholder="введи help" aria-label="Команда терминала">
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="section--tight wrap">
+    <div class="card callout reveal">
+      <div>
+        <span class="eyebrow">03 / Сообщество</span>
+        <h2 class="mt-xs">Заходи к нам</h2>
+        <p class="muted mt-xs">Новости, плейтесты, мемы и помощь — в Telegram и Discord.</p>
+      </div>
+      <div class="btn-row">
+        <a class="btn btn--primary" href="https://t.me/egornetwork_official" target="_blank" rel="noopener noreferrer">Telegram <span data-icon="send"></span></a>
+        <a class="btn" href="https://discord.gg/4e3wN9t79R" target="_blank" rel="noopener noreferrer">Discord</a>
+        <a class="btn btn--ghost" href="donations.html">Поддержать</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer" id="site-footer"></footer>
+</body>
+</html>

@@ -1,0 +1,18 @@
+# Old site (archive, never publish)
+.oldwebsite/
+
+# Claude Code local files
+.claude/
+CLAUDE.local.md
+.mcp.json
+.worktrees/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Node
+node_modules/

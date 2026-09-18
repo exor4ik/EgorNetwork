@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self' blob:; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>АРХИВ 014 — КОРИДОР</title>
+<link rel="icon" href="assets/img/favicon-32.png" type="image/png">
+<link rel="stylesheet" href="assets/css/coridore.css">
+</head>
+<body>
+  <div id="menu">
+    <div class="menu-inner">
+      <div class="menu-top">АРХИВ 014 // КОРИДОР_004.VHS</div>
+      <h1 class="glitch" data-text="КОРИДОР">КОРИДОР</h1>
+      <div class="subtitle">НАЙДЕННАЯ ЗАПИСЬ • НЕ ДЛЯ ПРОСМОТРА</div>
+
+      <div class="menu-bar"></div>
+
+      <div class="menu-buttons">
+        <button id="startBtn">НАЧАТЬ ПРОСМОТР</button>
+        <button id="helpBtn">УПРАВЛЕНИЕ</button>
+        <button id="archiveBtn">АРХИВНАЯ СПРАВКА</button>
+      </div>
+
+      <pre id="helpPanel" class="panel" hidden>
+WASD / стрелки — движение
+Shift — бег
+F — фонарик
+Мышь — осмотр
+Esc — пауза
+
+VHS:
+R — перемотка назад
+V — перемотка вперёд (не рекомендуется)
+P — пауза
+
+Совет: если увидишь его за поворотом — не подходи ближе.
+      </pre>
+
+      <pre id="archivePanel" class="panel" hidden>
+АРХИВНАЯ СПРАВКА:
+
+Объект: КОРИДОР_004
+Носитель: VHS-C, копия 3-го поколения
+Дата оцифровки: ??:??:????
+Состояние: повреждения по всей длине плёнки
+
+Примечание:
+Функция перемотки назад работает нестабильно.
+Иногда плёнка возвращается не туда, откуда началась.
+      </pre>
+
+      <div class="menu-footer">
+        © 1997 ??? • сигнал нестабилен • не перематывай назад
+      </div>
+    </div>
+  </div>
+
+  <div id="vignette"></div>
+
+  <div id="rec"><span class="dot"></span>REC</div>
+  <div id="timestamp">REC ● 03:14:1997 02:47:13</div>
+  <div id="hud">ПОВТОР: 0</div>
+
+  <div id="vhsPlayer">
+    <div class="vhs-top">
+      <div id="vhsMode" class="vhs-screen mode-stop">STOP</div>
+      <div id="vhsTape" class="vhs-screen">SP 00:00:00</div>
+    </div>
+
+    <div class="vhs-buttons">
+      <button id="btnPlay" title="Запустить просмотр">PLAY ▶</button>
+      <button id="btnPause" title="Пауза (P)">PAUSE ⏸</button>
+      <button id="btnStop" title="Остановить и вернуться к началу">STOP ⏹</button>
+      <button id="btnRew" title="Перемотка назад (R)">REW ◀◀</button>
+      <button id="btnFF" title="Перемотка вперёд (V, опасно)">FF ▶▶</button>
+      <button id="btnEject" title="Извлечь кассету">EJECT ⏏</button>
+    </div>
+
+    <div class="vhs-track"></div>
+  </div>
+
+  <div id="message"></div>
+  <div id="crosshair">·</div>
+
+  <div id="blackout">
+    <span id="blackoutText">СИГНАЛ ПОТЕРЯН</span>
+  </div>
+
+  <div id="rewindOverlay">
+    <span>REW ◀◀</span>
+  </div>
+
+  <div id="glitchOverlay"></div>
+
+  <canvas id="noiseCanvas" width="320" height="180"></canvas>
+  <div id="scanlines"></div>
+
+<script type="module" src="assets/js/coridore.js"></script>
+</body>
+</html>

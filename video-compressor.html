@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; media-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'self'; require-trusted-types-for 'script'; trusted-types en-worker; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
+<title>Компрессор видео — EgorNetwork</title>
+<meta name="description" content="Сжатие видео прямо в браузере через ffmpeg.wasm. Файл никуда не загружается.">
+<meta name="theme-color" content="#07080b">
+<link rel="icon" href="assets/img/favicon-32.png" type="image/png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/css/site.css">
+<script src="assets/js/site.js"></script>
+<script src="assets/js/video-compressor.js" defer></script>
+</head>
+<body>
+<header class="site-header" id="site-header"></header>
+
+<main id="main" class="wrap">
+  <section class="page-head">
+    <span class="eyebrow reveal">Инструмент · всё локально</span>
+    <h1 class="reveal d-1">Компрессор видео</h1>
+    <p class="lead reveal d-2">Сжатие через ffmpeg.wasm (H.264 + AAC). Рекомендуемый максимум — 400 МБ. Для 100 МБ → ~15 МБ ставьте CRF 26–28.</p>
+  </section>
+  <div class="grid grid--2">
+    <section class="card reveal stack">
+      <label class="drop" id="vc-drop">
+        <input type="file" id="vc-input" accept="video/*">
+        <span data-icon="film"></span>
+        <span id="vc-file">Перетащите файл сюда или нажмите, чтобы выбрать</span>
+      </label>
+      <div class="field">
+        <label for="vc-crf">Качество (CRF): <span class="accent" id="vc-crf-val">26</span></label>
+        <input class="range" type="range" id="vc-crf" min="18" max="32" step="1" value="26">
+        <p class="hint">18 — максимум качества · 24 — баланс · 26–28 — сильное сжатие · 30+ — заметные артефакты.</p>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn--primary" type="button" id="vc-go" disabled>Сжать</button>
+        <button class="btn btn--ghost" type="button" id="vc-cancel" hidden>Отмена</button>
+        <a class="btn" id="vc-download" hidden>Скачать</a>
+      </div>
+      <div class="meter"><i id="vc-bar"></i></div>
+      <p class="status" id="vc-status" role="status">Выберите файл для начала.</p>
+      <p class="hint">При первом запуске скачивается ядро FFmpeg (~25 МБ) с jsDelivr — с проверкой целостности (SRI).</p>
+    </section>
+    <aside class="card reveal d-1">
+      <h3>Приватность</h3>
+      <p>Файл не покидает ваш компьютер: обработка идёт прямо во вкладке браузера. Никаких загрузок на сервер, никакой аналитики.</p>
+    </aside>
+  </div>
+</main>
+
+<footer class="site-footer" id="site-footer"></footer>
+</body>
+</html>
