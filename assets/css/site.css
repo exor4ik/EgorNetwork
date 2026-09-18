@@ -412,7 +412,7 @@ a.card { display: block; text-decoration: none; color: inherit; }
 .project--feature { min-height: 380px; background:
   radial-gradient(600px 300px at 90% 0%, rgba(139, 123, 255, .18), transparent 60%),
   linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .015)); }
-.project__cover { position: absolute; right: 28px; top: 50%; width: clamp(96px, 16vw, 168px); margin-top: calc(clamp(96px, 16vw, 168px) / -2); border-radius: 22px; border: 1px solid var(--line-2); transform: rotate(6deg); transition: transform .6s var(--ease-spring); box-shadow: 0 20px 50px -20px #000; }
+.project__cover { position: absolute; right: 28px; top: 50%; width: clamp(96px, 16vw, 168px); height: auto; aspect-ratio: 1 / 1; object-fit: cover; margin-top: calc(clamp(96px, 16vw, 168px) / -2); border-radius: 22px; border: 1px solid var(--line-2); transform: rotate(6deg); transition: transform .6s var(--ease-spring); box-shadow: 0 20px 50px -20px #000; }
 .project:hover .project__cover { transform: rotate(-3deg) scale(1.06); }
 .project--feature > h3, .project--feature > p { padding-right: clamp(120px, 19vw, 200px); }
 @media (max-width: 560px) {
@@ -424,12 +424,15 @@ a.card { display: block; text-decoration: none; color: inherit; }
 /* ── Stats / countdown ──────────────────────────────────────────────────── */
 .season { display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; align-items: stretch; }
 @media (max-width: 900px) { .season { grid-template-columns: 1fr; } }
-.counter { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 24px; }
-.counter__cell { border: 1px solid var(--line); border-radius: 14px; padding: 16px 8px 12px; text-align: center; background: rgba(0, 0, 0, .25); }
+.counter { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 24px; container-type: inline-size; }
+.counter__cell { border: 1px solid var(--line); border-radius: 14px; padding: 16px 6px 12px; text-align: center; background: rgba(0, 0, 0, .25); min-width: 0; overflow: hidden; }
 .counter__num { display: inline-flex; gap: 2px; }
 .wheel {
-  width: .72em; height: 1.2em; overflow: hidden; position: relative;
-  font-family: var(--font-display); font-weight: 700; font-size: clamp(1.6rem, 4vw, 2.6rem); line-height: 1.2em; color: var(--accent);
+  /* цифра Unbounded ≈ 0.9em; кегль считаем от ширины счётчика так, чтобы
+     три цифры дней влезали в четверть (минус gap и padding ячейки) */
+  width: .92em; height: 1.2em; overflow: hidden; position: relative;
+  font-family: var(--font-display); font-weight: 700; line-height: 1.2em; color: var(--accent);
+  font-size: min(2.4rem, calc(((100cqi - 30px) / 4 - 18px) / 2.9));
 }
 .wheel__strip { display: flex; flex-direction: column; transition: transform .6s var(--ease-out); }
 .wheel__strip span { height: 1.2em; text-align: center; }
@@ -554,6 +557,7 @@ a.card { display: block; text-decoration: none; color: inherit; }
 
 /* ── Footer ─────────────────────────────────────────────────────────────── */
 .site-footer { border-top: 1px solid var(--line); padding-top: 64px; overflow: hidden; }
+.site-footer > .wrap { container-type: inline-size; }
 .footer__grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 40px; }
 @media (max-width: 800px) { .footer__grid { grid-template-columns: 1fr; } }
 .footer__title { font-family: var(--font-mono); font-size: .75rem; text-transform: uppercase; letter-spacing: .12em; color: var(--dim); margin-bottom: 14px; }
@@ -563,11 +567,10 @@ a.card { display: block; text-decoration: none; color: inherit; }
 .footer__legal { color: var(--dim); font-size: .85rem; max-width: 52ch; }
 .footer__legal a { color: var(--muted); }
 .footer__word {
-  font-family: var(--font-display); font-weight: 800; letter-spacing: -.05em; line-height: .8;
-  font-size: clamp(3.4rem, 15.5vw, 13rem); margin-top: 56px; white-space: nowrap;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, 0) 85%);
+  font-family: var(--font-display); font-weight: 800; letter-spacing: -.05em; line-height: 1.15;
+  font-size: calc(100cqi / 8.1); margin-top: 48px; padding-bottom: 24px; white-space: nowrap; text-align: center;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, .03));
   -webkit-background-clip: text; background-clip: text; color: transparent; user-select: none;
-  transform: translateY(18%);
 }
 
 /* ── 404 ────────────────────────────────────────────────────────────────── */
